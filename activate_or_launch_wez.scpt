@@ -1,5 +1,5 @@
 tell application "WezTerm"
-    delay 0.2
+    delay 0.1
     try
         activate
     on error
