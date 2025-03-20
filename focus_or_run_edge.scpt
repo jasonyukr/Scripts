@@ -1,6 +1,6 @@
 tell application "Microsoft Edge"
     activate
-    delay 0.1 -- Give Edge a moment to activate
+    delay 0.3 -- Give Edge a moment to activate
 
     set currentWindow to missing value
     repeat with aWindow in windows
