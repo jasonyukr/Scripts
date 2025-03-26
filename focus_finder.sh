@@ -2,7 +2,8 @@
 
 local APPNAME
 local STATUS
-local LISTALL
+local ITEM
+local FULL_LIST
 local LIST
 local CNT
 local CURR_DESKTOP
@@ -39,7 +40,6 @@ if [ ! -z "$ITEM" ]; then
   yabai -m window --focus $WINDOW_ID
   exit
 fi
-
 ITEM=$(echo $LIST | grep -v "^${CURR_DESKTOP} " | head -n 1)
 if [ ! -z "$ITEM" ]; then
   echo "Window found in another desktop. Focus it"
