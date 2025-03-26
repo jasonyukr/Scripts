@@ -1,31 +1,49 @@
 #!/bin/zsh
 
-local CNT
 local APPNAME
-local APPID
-
-APPNAME="Finder"
-APPID="com.apple.finder"
+local STATUS
+local LISTALL
+local LIST
+local CNT
+local CURR_DESKTOP
 
 PATH=$PATH$:/opt/bin
 
-CNT=$(countwnd $APPID)
+APPNAME="Finder"
 
-if [ -z "$CNT" ] || [ "$CNT" = "Z" ]; then
-  # This is impossible case !!
-  echo "App not running. Launch and activate"
+STATUS=$(appstatus $APPNAME)
+if [ ! "$STATUS" = "running" ]; then
+  echo "App not running UNEXPECTEDLY. Launch and activate"
   osascript -e "tell application \"$APPNAME\"" -e "launch" -e "activate" -e "end tell"
-elif [ "$CNT" = "0" ]; then
-  echo "No window found. Make new Finder window"
-  osascript -e "tell application \"$APPNAME\"" -e "make new Finder window" -e "end tell"
-else
-  echo "Window found. Activate"
-  osascript -e "tell application \"$APPNAME\"" -e "activate" -e "end tell"
+  exit
 fi
 
-# By unknown reasons, sometimes the finder window doesn't grab the focus.
-# Give some sleep and activate again to workaround the focus issue.
-sleep 0.1
-osascript -e "tell application \"$APPNAME\"" -e "activate" -e "end tell"
-sleep 0.1
-osascript -e "tell application \"$APPNAME\"" -e "activate" -e "end tell"
+FULL_LIST=$(listwnd)
+LIST=$(echo $FULL_LIST | rg "\"$APPNAME\"")
+if [ -z "$LIST" ]; then
+  CNT="0"
+else
+  CNT=$(echo $LIST | wc -l | trim)
+fi
+if [ "$CNT" = "0" ]; then
+  echo "No window found. Make new Finder window"
+  osascript -e "tell application \"$APPNAME\"" -e "make new Finder window" -e "end tell"
+  exit
+fi
+
+CURR_DESKTOP=$(echo $FULL_LIST | rg "^[0-9] true " | choose 0)
+ITEM=$(echo $LIST | grep "^${CURR_DESKTOP} " | head -n 1)
+if [ ! -z "$ITEM" ]; then
+  echo "Window found in current desktop. Focus it"
+  WINDOW_ID=$(echo $ITEM | choose 2)
+  yabai -m window --focus $WINDOW_ID
+  exit
+fi
+
+ITEM=$(echo $LIST | grep -v "^${CURR_DESKTOP} " | head -n 1)
+if [ ! -z "$ITEM" ]; then
+  echo "Window found in another desktop. Focus it"
+  WINDOW_ID=$(echo $ITEM | choose 2)
+  yabai -m window --focus $WINDOW_ID
+  exit
+fi
