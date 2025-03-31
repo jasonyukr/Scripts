@@ -11,11 +11,11 @@ tell application "System Events"
     key up option
     key up control
 
-    delay 0.1
+    delay 0.2
 
     do shell script "/bin/zsh ~/Scripts/move_focus_to_any_next_window_nosort.sh"
 
-    delay 0.1
+    delay 0.2
 
     -- Simulate ctrl-alt-shift-cmd-l
     key down control
