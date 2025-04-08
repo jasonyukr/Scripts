@@ -16,7 +16,7 @@ local LIST
 
 PATH=$PATH$:/opt/bin
 
-QLINES=$(listwnd -s)
+QLINES=$(listwnd -s | grep -v "Deskflow")
 if [ -z "$QLINES" ]; then
   exit
 fi
