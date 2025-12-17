@@ -35,7 +35,7 @@ if [ "$CNT" = "0" ]; then
   exit
 elif [ "$CNT" = "1" ]; then
   # very special case. we should count "kitten run-shell" from ps
-  PS_CNT=$(ps ax | grep "/Applications/kitty.app/Contents/MacOS/kitten run-shell" | grep -v grep | wc -l | trim)
+  PS_CNT=$(ps ax | grep "[A]pplications/kitty.app/Contents/MacOS/kitten run-shell" | wc -l | trim)
   if [ "$PS_CNT" = "0" ]; then
     echo "No window found. New OS Window"
     KITTY_SOCKET=$(ls -t /tmp/kitty* | head -n 1)
