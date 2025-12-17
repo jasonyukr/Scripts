@@ -6,6 +6,8 @@ local ITEM
 local FULL_LIST
 local LIST
 local CNT
+local PS_CNT
+local KITTY_SOCKET
 local CURR_DESKTOP
 
 PATH=$PATH$:/opt/bin
@@ -26,10 +28,20 @@ if [ -z "$LIST" ]; then
 else
   CNT=$(echo $LIST | wc -l | trim)
 fi
+
 if [ "$CNT" = "0" ]; then
   echo "No window found UNEXPECTEDLY. Activate"
   osascript -e "tell application \"$APPNAME\"" -e "activate" -e "end tell"
   exit
+elif [ "$CNT" = "1" ]; then
+  # very special case. we should count "kitten run-shell" from ps
+  PS_CNT=$(ps ax | grep "/Applications/kitty.app/Contents/MacOS/kitten run-shell" | grep -v grep | wc -l | trim)
+  if [ "$PS_CNT" = "0" ]; then
+    echo "No window found. New OS Window"
+    KITTY_SOCKET=$(ls -t /tmp/kitty* | head -n 1)
+    /Applications/kitty.app/Contents/MacOS/kitty @ --to unix:"$KITTY_SOCKET" launch --type=os-window
+    exit
+  fi
 fi
 
 CURR_DESKTOP=$(echo $FULL_LIST | rg "^[0-9] true " | choose 0)
