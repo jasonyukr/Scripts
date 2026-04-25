@@ -13,6 +13,11 @@ local LINE
 local CNT
 local FOCUSED_IDX
 local LIST
+local REMEMBERED_WINDOW_ID
+local STATE_FILE
+local -A APP_NAMES
+local -A DESKTOP_WINDOW_IDS
+local -A REMEMBERED_WINDOW_IDS
 
 PATH=$PATH$:/opt/bin
 
@@ -29,6 +34,28 @@ FOCUSED_APP_NAME=$(echo $LINE | pickup -s 3)
 if [ -z "$FOCUSED_DESKTOP_ID" ] || [ -z "$FOCUSED_WINDOW_ID" ] || [ -z "$FOCUSED_APP_NAME" ]; then
   return
 fi
+
+STATE_FILE="${TMPDIR:-/tmp}/move_focus_to_other_window_reps_$FOCUSED_DESKTOP_ID"
+if [ -f "$STATE_FILE" ]; then
+  while IFS=$'\t' read -r WINDOW_ID APP_NAME; do
+    if [ -n "$WINDOW_ID" ] && [ -n "$APP_NAME" ]; then
+      REMEMBERED_WINDOW_IDS[$APP_NAME]=$WINDOW_ID
+    fi
+  done < "$STATE_FILE"
+fi
+REMEMBERED_WINDOW_IDS[$FOCUSED_APP_NAME]=$FOCUSED_WINDOW_ID
+: > "$STATE_FILE"
+for APP_NAME in "${(@k)REMEMBERED_WINDOW_IDS}"; do
+  print -r -- "$REMEMBERED_WINDOW_IDS[$APP_NAME]"$'\t'"$APP_NAME" >> "$STATE_FILE"
+done
+
+echo $QLINES | while IFS= read -r LINE; do
+  WINDOW_ID=$(echo $LINE | choose 2)
+  DESKTOP_ID=$(echo $LINE | choose 0)
+  if [ "$FOCUSED_DESKTOP_ID" = "$DESKTOP_ID" ]; then
+    DESKTOP_WINDOW_IDS[$WINDOW_ID]=1
+  fi
+done
 
 # Populate LIST
 CNT=0
@@ -49,8 +76,15 @@ echo $QLINES | while IFS= read -r LINE; do
         ;
       fi
     else
-      ((CNT++))
-      LIST="$LIST $WINDOW_ID"
+      if [ -z "$APP_NAMES[$APP_NAME]" ]; then
+        APP_NAMES[$APP_NAME]=1
+        REMEMBERED_WINDOW_ID=$REMEMBERED_WINDOW_IDS[$APP_NAME]
+        if [ -n "$REMEMBERED_WINDOW_ID" ] && [ -n "$DESKTOP_WINDOW_IDS[$REMEMBERED_WINDOW_ID]" ]; then
+          WINDOW_ID=$REMEMBERED_WINDOW_ID
+        fi
+        ((CNT++))
+        LIST="$LIST $WINDOW_ID"
+      fi
     fi
   fi
 done
