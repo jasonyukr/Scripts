@@ -16,7 +16,7 @@ local LIST
 
 PATH=$PATH$:/opt/bin
 
-QLINES=$(listwnd)
+QLINES=$(listwnd | awk 'NR==FNR { ids[$1]; next } $3 in ids' <(yabai -m query --windows | jq -r '.[] | select(."has-ax-reference" == true) | .id') -)
 if [ -z "$QLINES" ]; then
   exit
 fi
